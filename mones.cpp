@@ -1,4 +1,13 @@
 // NPlayer
+// Token: 0x060045C8 RID: 17864 RVA: 0x00017070 File Offset: 0x00015270
+[Token(Token = "0x60045C8")]
+[Address(RVA = "0x770CC8", Offset = "0x770CC8", VA = "0x770CC8")]
+public NTeamFlag get_TeamFlag()
+{
+	return NTeamFlag.None;
+}
+
+// NPlayer
 // Token: 0x0600461E RID: 17950 RVA: 0x00002053 File Offset: 0x00000253
 [Token(Token = "0x600461E")]
 [Address(RVA = "0x783A54", Offset = "0x783A54", VA = "0x783A54")]
