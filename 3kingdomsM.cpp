@@ -64,7 +64,12 @@ long getdamage(void *instance,void *attacker,void *target,void *skill) {
     }
     return old_getdamage(instance,attacker,target,skill);
 }
-
+#if defined(__aarch64__)
+    HOOK_LIB("libil2cpp.so", "0xC2D8A8", getcritical, old_getcritical);
+    HOOK_LIB("libil2cpp.so", "0xC2DC00", getevasion, old_getevasion);
+    HOOK_LIB("libil2cpp.so", "0xC2E128", getdamage, old_getdamage);
+    get_enemy = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0xCA410C);
+#else //To compile this code for armv7 lib only.
  HOOK_LIB("libil2cpp.so", "0x6B2990", getcritical, old_getcritical);
     HOOK_LIB("libil2cpp.so", "0x6B2DF0", getevasion, old_getevasion);
     HOOK_LIB("libil2cpp.so", "0x6B34DC", getdamage, old_getdamage);
