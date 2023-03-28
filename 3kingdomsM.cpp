@@ -15,6 +15,7 @@ public static bool GetEvasion(cHeroInfo attacker, cHeroInfo target, cBattleSkill
 	return default(bool);
 }
 
+
 // cHeroInfo
 // Token: 0x0600154B RID: 5451 RVA: 0x00008418 File Offset: 0x00006618
 [Token(Token = "0x600154B")]
@@ -23,15 +24,19 @@ public bool get_IsEnemy()
 {
 	return default(bool);
 }
+public bool get_IsDead()
+{
+	return default(bool);
+}
 
 
-bool critical,evasion,item;
+bool critical,evasion,item,killenemy;
 int sliderValue = 1,nilai = 0;
-int (*old_getitemamount)(void *instance);
 bool(*old_getcritical)(void *instance,void *attacker,void *target);
 bool(*old_getevasion)(void *instance,void *attacker,void *target,void *skill);
 long (*old_getdamage)(void *instance,void *attacker,void *target,void *skill);
 bool (*get_enemy)(void *instance);
+bool (*old_getdead)(void *instance);
 
 
 bool getcritical(void *instance,void *attacker,void *target) {
@@ -64,21 +69,34 @@ long getdamage(void *instance,void *attacker,void *target,void *skill) {
     }
     return old_getdamage(instance,attacker,target,skill);
 }
+bool getdead(void *instance) {
+    if (instance != NULL && killenemy) {
+    bool enemy = get_enemy(instance);
+    if(enemy){
+    return true;
+    }
+    }
+    return old_getdead(instance);
+}
+
 #if defined(__aarch64__)
     HOOK_LIB("libil2cpp.so", "0xC2D8A8", getcritical, old_getcritical);
     HOOK_LIB("libil2cpp.so", "0xC2DC00", getevasion, old_getevasion);
     HOOK_LIB("libil2cpp.so", "0xC2E128", getdamage, old_getdamage);
+    HOOK_LIB("libil2cpp.so", "0xCA3518", getdead, old_getdead);
     get_enemy = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0xCA410C);
 #else //To compile this code for armv7 lib only.
  HOOK_LIB("libil2cpp.so", "0x6B2990", getcritical, old_getcritical);
     HOOK_LIB("libil2cpp.so", "0x6B2DF0", getevasion, old_getevasion);
     HOOK_LIB("libil2cpp.so", "0x6B34DC", getdamage, old_getdamage);
+    HOOK_LIB("libil2cpp.so", "0x74445C", getdead, old_getdead);
     get_enemy = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x7453A0);
 
 OBFUSCATE("Category_The Category"), //Not counted
             OBFUSCATE("SeekBar_Damage x_1_10"),
             OBFUSCATE("ButtonOnOff_Always Critical"),
             OBFUSCATE("ButtonOnOff_Always Dodge"),
+	    OBFUSCATE("ButtonOnOff_Always Win"),
             OBFUSCATE("RichTextView_<big> <font color='red'>Noted x2 = x4 x3 = x6... x5 = x10!!!</font>")
               
               
@@ -93,5 +111,5 @@ OBFUSCATE("Category_The Category"), //Not counted
             evasion = boolean;
             break;
         case 3:
-            item = boolean;
+            killenemy = boolean;
             break;
