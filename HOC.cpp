@@ -1,5 +1,3 @@
-#HOC
-
 #include <list>
 #include <vector>
 #include <string.h>
@@ -21,7 +19,7 @@
 #define targetLibName OBFUSCATE("libil2cpp.so")
 
 #include "Includes/Macros.h"
-bool deathstrike,nodamage,morexp;
+bool deathstrike,nodamage,morexp,attackspeed,distance,ricochet;
 void (*old_Update)(void *instance);
 void (*old_addxp)(void *instance,int addexp,bool boost);
 bool (*get_IsAI)(void *instance);
@@ -46,6 +44,16 @@ void get_Update(void *instance){
             if (nodamage) {
                 *(float *) ((uint64_t) characterBaseData + 0x100) = 100.0f;
                 *(float *) ((uint64_t) characterBaseData + 0x104) = 100.0f;
+            }
+            if (attackspeed) {
+                *(float *) ((uint64_t) characterBaseData + 0xDC) = 5.0f;
+            }
+            if (distance) {
+                *(float *) ((uint64_t) characterBaseData + 0x54) = 20.0f;
+                *(float *) ((uint64_t) characterBaseData + 0x88) = 20.0f;
+            }
+            if (ricochet) {
+                *(int *) ((uint64_t) characterBaseData + 0x5C) = 20;
             }
         }
     }
@@ -187,9 +195,12 @@ jobjectArray GetFeatureList(JNIEnv *env, jobject context) {
 
     const char *features[] = {
             OBFUSCATE("Category_The Category"), //Not counted
-            OBFUSCATE("Toggle_100% Death Strike"),
-            OBFUSCATE("Toggle_Enemy Damage 1"),
-            OBFUSCATE("Toggle_Exp x2")
+            OBFUSCATE("Toggle_1 hit mati"),
+            OBFUSCATE("Toggle_Damage Musuh 1"),
+            OBFUSCATE("Toggle_Exp Kali 2"),
+            OBFUSCATE("Toggle_Jarak Tembak Jauh"),
+            OBFUSCATE("Toggle_Attack Speed Cepat"),
+            OBFUSCATE("Toggle_Setiap Nembak Mantul")
             /*
             OBFUSCATE("Toggle_The toggle"),
             OBFUSCATE(
@@ -245,8 +256,8 @@ jobjectArray GetFeatureList(JNIEnv *env, jobject context) {
 }
 
 void Changes(JNIEnv *env, jclass clazz, jobject obj,
-                                        jint featNum, jstring featName, jint value,
-                                        jboolean boolean, jstring str) {
+             jint featNum, jstring featName, jint value,
+             jboolean boolean, jstring str) {
 
     LOGD(OBFUSCATE("Feature name: %d - %s | Value: = %d | Bool: = %d | Text: = %s"), featNum,
          env->GetStringUTFChars(featName, 0), value,
@@ -255,90 +266,99 @@ void Changes(JNIEnv *env, jclass clazz, jobject obj,
     //BE CAREFUL NOT TO ACCIDENTLY REMOVE break;
 
     switch (featNum) {
-    case 0:
-        deathstrike = boolean;
-        break;
-    case 1:
-        nodamage = boolean;
-        break;
-    case 2:
-        morexp = boolean;
-        break;
-    /*
         case 0:
-            // A much simpler way to patch hex via KittyMemory without need to specify the struct and len. Spaces or without spaces are fine
-            // ARMv7 assembly example
-            // MOV R0, #0x0 = 00 00 A0 E3
-            // BX LR = 1E FF 2F E1
-            PATCH_LIB_SWITCH("libil2cpp.so", "0x100000", "00 00 A0 E3 1E FF 2F E1", boolean);
-            break;
-        case 100:
-            //Reminder that the strings are auto obfuscated
-            //Switchable patch
-            PATCH_SWITCH("0x400000", "00 00 A0 E3 1E FF 2F E1", boolean);
-            PATCH_LIB_SWITCH("libil2cpp.so", "0x200000", "00 00 A0 E3 1E FF 2F E1", boolean);
-            PATCH_SYM_SWITCH("_SymbolExample", "00 00 A0 E3 1E FF 2F E1", boolean);
-            PATCH_LIB_SYM_SWITCH("libNativeGame.so", "_SymbolExample", "00 00 A0 E3 1E FF 2F E1", boolean);
-
-            //Restore patched offset to original
-            RESTORE("0x400000");
-            RESTORE_LIB("libil2cpp.so", "0x400000");
-            RESTORE_SYM("_SymbolExample");
-            RESTORE_LIB_SYM("libil2cpp.so", "_SymbolExample");
-            break;
-        case 110:
+            deathstrike = boolean;
             break;
         case 1:
-            if (value >= 1) {
-                sliderValue = value;
-            }
+            nodamage = boolean;
             break;
         case 2:
-            switch (value) {
-                //For noobies
-                case 0:
-                    RESTORE("0x0");
-                    break;
-                case 1:
-                    PATCH("0x0", "01 00 A0 E3 1E FF 2F E1");
-                    break;
-                case 2:
-                    PATCH("0x0", "02 00 A0 E3 1E FF 2F E1");
-                    break;
-            }
+            morexp = boolean;
             break;
         case 3:
-            switch (value) {
-                case 0:
-                    LOGD(OBFUSCATE("Selected item 1"));
-                    break;
-                case 1:
-                    LOGD(OBFUSCATE("Selected item 2"));
-                    break;
-                case 2:
-                    LOGD(OBFUSCATE("Selected item 3"));
-                    break;
-            }
+            distance = boolean;
             break;
         case 4:
-            // Since we have instanceBtn as a field, we can call it out of Update hook function
-            if (instanceBtn != NULL)
-                AddMoneyExample(instanceBtn, 999999);
-            // MakeToast(env, obj, OBFUSCATE("Button pressed"), Toast::LENGTH_SHORT);
+            attackspeed = boolean;
             break;
         case 5:
+            ricochet = boolean;
             break;
-        case 6:
-            featureHookToggle = boolean;
-            break;
-        case 7:
-            level = value;
-            break;
-        case 8:
-            break;
-        case 9:
-            break;
-            */
+            /*
+                case 0:
+                    // A much simpler way to patch hex via KittyMemory without need to specify the struct and len. Spaces or without spaces are fine
+                    // ARMv7 assembly example
+                    // MOV R0, #0x0 = 00 00 A0 E3
+                    // BX LR = 1E FF 2F E1
+                    PATCH_LIB_SWITCH("libil2cpp.so", "0x100000", "00 00 A0 E3 1E FF 2F E1", boolean);
+                    break;
+                case 100:
+                    //Reminder that the strings are auto obfuscated
+                    //Switchable patch
+                    PATCH_SWITCH("0x400000", "00 00 A0 E3 1E FF 2F E1", boolean);
+                    PATCH_LIB_SWITCH("libil2cpp.so", "0x200000", "00 00 A0 E3 1E FF 2F E1", boolean);
+                    PATCH_SYM_SWITCH("_SymbolExample", "00 00 A0 E3 1E FF 2F E1", boolean);
+                    PATCH_LIB_SYM_SWITCH("libNativeGame.so", "_SymbolExample", "00 00 A0 E3 1E FF 2F E1", boolean);
+
+                    //Restore patched offset to original
+                    RESTORE("0x400000");
+                    RESTORE_LIB("libil2cpp.so", "0x400000");
+                    RESTORE_SYM("_SymbolExample");
+                    RESTORE_LIB_SYM("libil2cpp.so", "_SymbolExample");
+                    break;
+                case 110:
+                    break;
+                case 1:
+                    if (value >= 1) {
+                        sliderValue = value;
+                    }
+                    break;
+                case 2:
+                    switch (value) {
+                        //For noobies
+                        case 0:
+                            RESTORE("0x0");
+                            break;
+                        case 1:
+                            PATCH("0x0", "01 00 A0 E3 1E FF 2F E1");
+                            break;
+                        case 2:
+                            PATCH("0x0", "02 00 A0 E3 1E FF 2F E1");
+                            break;
+                    }
+                    break;
+                case 3:
+                    switch (value) {
+                        case 0:
+                            LOGD(OBFUSCATE("Selected item 1"));
+                            break;
+                        case 1:
+                            LOGD(OBFUSCATE("Selected item 2"));
+                            break;
+                        case 2:
+                            LOGD(OBFUSCATE("Selected item 3"));
+                            break;
+                    }
+                    break;
+                case 4:
+                    // Since we have instanceBtn as a field, we can call it out of Update hook function
+                    if (instanceBtn != NULL)
+                        AddMoneyExample(instanceBtn, 999999);
+                    // MakeToast(env, obj, OBFUSCATE("Button pressed"), Toast::LENGTH_SHORT);
+                    break;
+                case 5:
+                    break;
+                case 6:
+                    featureHookToggle = boolean;
+                    break;
+                case 7:
+                    level = value;
+                    break;
+                case 8:
+                    break;
+                case 9:
+                    break;
+                    */
     }
 }
 
