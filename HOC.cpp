@@ -51,13 +51,21 @@ void get_Update(void *instance){
             // Cek apakah nilai default sudah diambil
             if (!isDefaultInitialized) {
                 // Ambil nilai default dari memory
+                //deathStrikeChance
                 defaultDeathstrikeValue = *(float *)((uint64_t)characterBaseData + 0xF8);
+                //damageReductionPercent
                 defaultNoDamageValue1 = *(float *)((uint64_t)characterBaseData + 0x104);
+                //damageReductionPercentage
                 defaultNoDamageValue2 = *(float *)((uint64_t)characterBaseData + 0x108);
+                //attackSpeed
                 defaultAttackSpeedValue = *(float *)((uint64_t)characterBaseData + 0xE0);
+                //attackDistance
                 defaultDistanceValue1 = *(float *)((uint64_t)characterBaseData + 0x58);
+                //attackRangeRadius
                 defaultDistanceValue2 = *(float *)((uint64_t)characterBaseData + 0x8C);
+                //ricochetAmount
                 defaultRicochetValue = *(int *)((uint64_t)characterBaseData + 0x60);
+                //multishot
                 defaultMultishotValue = *(int *)((uint64_t)characterBaseData + 0x68);
 
                 isDefaultInitialized = true; // Tandai bahwa nilai default sudah diambil
@@ -101,6 +109,51 @@ void get_Update(void *instance){
     return old_Update(instance);
 }
 
+
+/*
+bool feature1, feature2, featureHookToggle, Health;
+int sliderValue = 1, level = 0;
+void *instanceBtn;
+
+// Hooking examples. Assuming you know how to write hook
+void (*AddMoneyExample)(void *instance, int amount);
+
+bool (*old_get_BoolExample)(void *instance);
+bool get_BoolExample(void *instance) {
+    if (instance != NULL && featureHookToggle) {
+        return true;
+    }
+    return old_get_BoolExample(instance);
+}
+
+float (*old_get_FloatExample)(void *instance);
+float get_FloatExample(void *instance) {
+    if (instance != NULL && sliderValue > 1) {
+        return (float) sliderValue;
+    }
+    return old_get_FloatExample(instance);
+}
+
+int (*old_Level)(void *instance);
+int Level(void *instance) {
+    if (instance != NULL && level) {
+        return (int) level;
+    }
+    return old_Level(instance);
+}
+
+void (*old_FunctionExample)(void *instance);
+void FunctionExample(void *instance) {
+    instanceBtn = instance;
+    if (instance != NULL) {
+        if (Health) {
+            *(int *) ((uint64_t) instance + 0x48) = 999;
+        }
+    }
+    return old_FunctionExample(instance);
+}
+*/
+
 // we will run our hacks in a new thread so our while loop doesn't block process main thread
 void *hack_thread(void *) {
     LOGI(OBFUSCATE("pthread created"));
@@ -122,15 +175,55 @@ void *hack_thread(void *) {
     // Hook example. Comment out if you don't use hook
     // Strings in macros are automatically obfuscated. No need to obfuscate!
 
+    /*
+    HOOK("str", FunctionExample, old_FunctionExample);
+    HOOK_LIB("libFileB.so", "0x123456", FunctionExample, old_FunctionExample);
+    HOOK_NO_ORIG("0x123456", FunctionExample);
+    HOOK_LIB_NO_ORIG("libFileC.so", "0x123456", FunctionExample);
+    HOOKSYM("__SymbolNameExample", FunctionExample, old_FunctionExample);
+    HOOKSYM_LIB("libFileB.so", "__SymbolNameExample", FunctionExample, old_FunctionExample);
+    HOOKSYM_NO_ORIG("__SymbolNameExample", FunctionExample);
+    HOOKSYM_LIB_NO_ORIG("libFileB.so", "__SymbolNameExample", FunctionExample);
+
+    // Patching offsets directly. Strings are automatically obfuscated too!
+    PATCH("0x20D3A8", "00 00 A0 E3 1E FF 2F E1");
+    PATCH_LIB("libFileB.so", "0x20D3A8", "00 00 A0 E3 1E FF 2F E1");
+
+    AddMoneyExample = (void(*)(void *,int))getAbsoluteAddress(targetLibName, 0x123456);
+    */
+
 #else //To compile this code for armv7 lib only.
     //  Gameplay.Characters.PlayerController.FixedUpdate
-    HOOK_LIB("libil2cpp.so", "0x174DD00", get_Update, old_Update);
+    HOOK_LIB("libil2cpp.so", "0x17607E8", get_Update, old_Update);
 
     // Gameplay.Characters.PlayerController.AddXp
-    HOOK_LIB("libil2cpp.so", "0x174AA94", get_addxp, old_addxp);
+    HOOK_LIB("libil2cpp.so", "0x175D57C", get_addxp, old_addxp);
 
     // Gameplay.Characters.CharacterEntity.get_IsAI
-    get_IsAI = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x16F4E48);
+    get_IsAI = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x1705AD0);
+
+    /*
+    // Hook example. Comment out if you don't use hook
+    // Strings in macros are automatically obfuscated. No need to obfuscate!
+    HOOK("str", FunctionExample, old_FunctionExample);
+    HOOK_LIB("libFileB.so", "0x123456", FunctionExample, old_FunctionExample);
+    HOOK_NO_ORIG("0x123456", FunctionExample);
+    HOOK_LIB_NO_ORIG("libFileC.so", "0x123456", FunctionExample);
+    HOOKSYM("__SymbolNameExample", FunctionExample, old_FunctionExample);
+    HOOKSYM_LIB("libFileB.so", "__SymbolNameExample", FunctionExample, old_FunctionExample);
+    HOOKSYM_NO_ORIG("__SymbolNameExample", FunctionExample);
+    HOOKSYM_LIB_NO_ORIG("libFileB.so", "__SymbolNameExample", FunctionExample);
+
+    // Patching offsets directly. Strings are automatically obfuscated too!
+    PATCH("0x20D3A8", "00 00 A0 E3 1E FF 2F E1");
+    PATCH_LIB("libFileB.so", "0x20D3A8", "00 00 A0 E3 1E FF 2F E1");
+
+    //Restore changes to original
+    RESTORE("0x20D3A8");
+    RESTORE_LIB("libFileB.so", "0x20D3A8");
+
+    AddMoneyExample = (void (*)(void *, int)) getAbsoluteAddress(targetLibName, 0x123456);
+    */
 
     LOGI(OBFUSCATE("Done"));
 #endif
@@ -165,6 +258,46 @@ jobjectArray GetFeatureList(JNIEnv *env, jobject context) {
             OBFUSCATE("Toggle_Attack Speed Cepat"),
             OBFUSCATE("Toggle_Setiap Nembak Mantul"),
             OBFUSCATE("Toggle_MultiShot x10")
+            /*
+            OBFUSCATE("Toggle_The toggle"),
+            OBFUSCATE(
+                    "100_Toggle_True_The toggle 2"), //This one have feature number assigned, and switched on by default
+            OBFUSCATE("110_Toggle_The toggle 3"), //This one too
+            OBFUSCATE("SeekBar_The slider_1_100"),
+            OBFUSCATE("SeekBar_Kittymemory slider example_1_5"),
+            OBFUSCATE("Spinner_The spinner_Items 1,Items 2,Items 3"),
+            OBFUSCATE("Button_The button"),
+            OBFUSCATE("ButtonLink_The button with link_https://www.youtube.com/"), //Not counted
+            OBFUSCATE("ButtonOnOff_The On/Off button"),
+            OBFUSCATE("CheckBox_The Check Box"),
+            OBFUSCATE("InputValue_Input number"),
+            OBFUSCATE("InputValue_1000_Input number 2"), //Max value
+            OBFUSCATE("InputText_Input text"),
+            OBFUSCATE("RadioButton_Radio buttons_OFF,Mod 1,Mod 2,Mod 3"),
+
+            //Create new collapse
+            OBFUSCATE("Collapse_Collapse 1"),
+            OBFUSCATE("CollapseAdd_Toggle_The toggle"),
+            OBFUSCATE("CollapseAdd_Toggle_The toggle"),
+            OBFUSCATE("123_CollapseAdd_Toggle_The toggle"),
+            OBFUSCATE("122_CollapseAdd_CheckBox_Check box"),
+            OBFUSCATE("CollapseAdd_Button_The button"),
+
+            //Create new collapse again
+            OBFUSCATE("Collapse_Collapse 2_True"),
+            OBFUSCATE("CollapseAdd_SeekBar_The slider_1_100"),
+            OBFUSCATE("CollapseAdd_InputValue_Input number"),
+
+            OBFUSCATE("RichTextView_This is text view, not fully HTML."
+                      "<b>Bold</b> <i>italic</i> <u>underline</u>"
+                      "<br />New line <font color='red'>Support colors</font>"
+                      "<br/><big>bigger Text</big>"),
+            OBFUSCATE("RichWebView_<html><head><style>body{color: white;}</style></head><body>"
+                      "This is WebView, with REAL HTML support!"
+                      "<div style=\"background-color: darkblue; text-align: center;\">Support CSS</div>"
+                      "<marquee style=\"color: green; font-weight:bold;\" direction=\"left\" scrollamount=\"5\" behavior=\"scroll\">This is <u>scrollable</u> text</marquee>"
+                      "</body></html>")
+                      */
     };
 
     //Now you dont have to manually update the number everytime;
@@ -211,7 +344,6 @@ void Changes(JNIEnv *env, jclass clazz, jobject obj,
         case 6:
             multishot = boolean;
             break;
-            
     }
 }
 
