@@ -19,11 +19,15 @@
 #define targetLibName OBFUSCATE("libil2cpp.so")
 
 #include "Includes/Macros.h"
-bool deathstrike,nodamage,morexp,attackspeed,distance,ricochet,multishot;
+bool deathstrike,nodamage,morexp,distance;
 void (*old_Update)(void *instance);
 void (*old_addxp)(void *instance,int addexp,bool boost);
+bool (*old_IsMultiplayerPlayer)(void *instance);
 bool (*get_IsAI)(void *instance);
-bool isDefaultInitialized = false;
+int ricochet = -1;
+int multishot = -1;
+float attackspeed = -1;
+float movementSpeed = 0;
 
 void get_addxp(void *instance,int addexp,bool boost){
     if(instance != NULL){
@@ -34,75 +38,42 @@ void get_addxp(void *instance,int addexp,bool boost){
     }
     return old_addxp(instance,addexp,boost);
 }
+bool get_IsMultiplayerPlayer(void *instance){
+    if(instance != NULL){
+            return false;
+    }
+    return old_IsMultiplayerPlayer(instance);
+}
 
 void get_Update(void *instance){
-    static float defaultDeathstrikeValue;
-    static float defaultNoDamageValue1, defaultNoDamageValue2;
-    static float defaultAttackSpeedValue;
-    static float defaultDistanceValue1, defaultDistanceValue2;
-    static int defaultRicochetValue;
-    static int defaultMultishotValue;
-
     if(instance != NULL){
         //Gameplay.Characters.CharacterEntity.characterBaseData (Field)
         void *characterBaseData = *(void**)((uint64_t)instance + 0x24);
         bool ai = get_IsAI(instance);
         if(characterBaseData != NULL && !ai) {
             // Cek apakah nilai default sudah diambil
-            if (!isDefaultInitialized) {
-                // Ambil nilai default dari memory
-                //deathStrikeChance
-                defaultDeathstrikeValue = *(float *)((uint64_t)characterBaseData + 0xF8);
-                //damageReductionPercent
-                defaultNoDamageValue1 = *(float *)((uint64_t)characterBaseData + 0x104);
-                //damageReductionPercentage
-                defaultNoDamageValue2 = *(float *)((uint64_t)characterBaseData + 0x108);
-                //attackSpeed
-                defaultAttackSpeedValue = *(float *)((uint64_t)characterBaseData + 0xE0);
-                //attackDistance
-                defaultDistanceValue1 = *(float *)((uint64_t)characterBaseData + 0x58);
-                //attackRangeRadius
-                defaultDistanceValue2 = *(float *)((uint64_t)characterBaseData + 0x8C);
-                //ricochetAmount
-                defaultRicochetValue = *(int *)((uint64_t)characterBaseData + 0x60);
-                //multishot
-                defaultMultishotValue = *(int *)((uint64_t)characterBaseData + 0x68);
-
-                isDefaultInitialized = true; // Tandai bahwa nilai default sudah diambil
-            }
             if (deathstrike) {
                 *(float *) ((uint64_t) characterBaseData + 0xF8) = 100.0f;
-            } else{
-                *(float *) ((uint64_t) characterBaseData + 0xF8) = defaultDeathstrikeValue;
             }
             if (nodamage) {
                 *(float *) ((uint64_t) characterBaseData + 0x104) = 100.0f;
                 *(float *) ((uint64_t) characterBaseData + 0x108) = 100.0f;
-            } else{
-                *(float *) ((uint64_t) characterBaseData + 0x104) = defaultNoDamageValue1;
-                *(float *) ((uint64_t) characterBaseData + 0x108) = defaultNoDamageValue2;
             }
-            if (attackspeed) {
-                *(float *) ((uint64_t) characterBaseData + 0xE0) = 5.0f;
-            }else{
-                *(float *) ((uint64_t) characterBaseData + 0xE0) = defaultAttackSpeedValue;
+            if (attackspeed > 0) {
+                *(float *) ((uint64_t) characterBaseData + 0xE0) = attackspeed;
             }
             if (distance) {
                 *(float *) ((uint64_t) characterBaseData + 0x58) = 20.0f;
                 *(float *) ((uint64_t) characterBaseData + 0x8C) = 20.0f;
-            }else{
-                *(float *) ((uint64_t) characterBaseData + 0x58) = defaultDistanceValue1;
-                *(float *) ((uint64_t) characterBaseData + 0x8C) = defaultDistanceValue2;
             }
-            if (ricochet) {
-                *(int *) ((uint64_t) characterBaseData + 0x60) = 20;
-            }else{
-                *(int *) ((uint64_t) characterBaseData + 0x60) = defaultRicochetValue;
+            if (ricochet >= 0) {
+                *(int *) ((uint64_t) characterBaseData + 0x60) = ricochet;
             }
-            if (multishot) {
-                *(int *) ((uint64_t) characterBaseData + 0x68) = 10;
-            }else{
-                *(int *) ((uint64_t) characterBaseData + 0x68) = defaultMultishotValue;
+            if (multishot >= 0) {
+                *(int *) ((uint64_t) characterBaseData + 0x68) = multishot;
+            }
+            if (movementSpeed >= 1) {
+                *(float *) ((uint64_t) characterBaseData + 0xE4) = movementSpeed;
             }
         }
     }
@@ -199,6 +170,9 @@ void *hack_thread(void *) {
     // Gameplay.Characters.PlayerController.AddXp
     HOOK_LIB("libil2cpp.so", "0x175D57C", get_addxp, old_addxp);
 
+    // Gameplay.Characters.CharacterEntity.get_IsMultiplayerPlayer
+    HOOK_LIB("libil2cpp.so", "0x1705B40", get_IsMultiplayerPlayer, old_IsMultiplayerPlayer);
+
     // Gameplay.Characters.CharacterEntity.get_IsAI
     get_IsAI = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x1705AD0);
 
@@ -255,9 +229,10 @@ jobjectArray GetFeatureList(JNIEnv *env, jobject context) {
             OBFUSCATE("Toggle_Damage Musuh 1"),
             OBFUSCATE("Toggle_Exp Kali 2"),
             OBFUSCATE("Toggle_Jarak Tembak Jauh"),
-            OBFUSCATE("Toggle_Attack Speed Cepat"),
-            OBFUSCATE("Toggle_Setiap Nembak Mantul"),
-            OBFUSCATE("Toggle_MultiShot x10")
+            OBFUSCATE("SeekBar_Attack Speed_0_10"),
+            OBFUSCATE("SeekBar_Setiap Nembak Mantul_0_20"),
+            OBFUSCATE("SeekBar_MultiShot_0_20"),
+            OBFUSCATE("SeekBar_Movement Speed_0_10"),
             /*
             OBFUSCATE("Toggle_The toggle"),
             OBFUSCATE(
@@ -336,13 +311,16 @@ void Changes(JNIEnv *env, jclass clazz, jobject obj,
             distance = boolean;
             break;
         case 4:
-            attackspeed = boolean;
+            attackspeed = value;
             break;
         case 5:
-            ricochet = boolean;
+            ricochet = value;
             break;
         case 6:
-            multishot = boolean;
+            multishot = value;
+            break;
+        case 7:
+            movementSpeed = value;
             break;
     }
 }
