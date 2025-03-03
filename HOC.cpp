@@ -22,7 +22,6 @@
 bool deathstrike,nodamage,morexp,distance;
 void (*old_Update)(void *instance);
 void (*old_addxp)(void *instance,int addexp,bool boost);
-bool (*old_IsMultiplayerPlayer)(void *instance);
 bool (*get_IsAI)(void *instance);
 int ricochet = -1;
 int multishot = -1;
@@ -38,17 +37,11 @@ void get_addxp(void *instance,int addexp,bool boost){
     }
     return old_addxp(instance,addexp,boost);
 }
-bool get_IsMultiplayerPlayer(void *instance){
-    if(instance != NULL){
-            return false;
-    }
-    return old_IsMultiplayerPlayer(instance);
-}
 
 void get_Update(void *instance){
     if(instance != NULL){
         //Gameplay.Characters.CharacterEntity.characterBaseData (Field)
-        void *characterBaseData = *(void**)((uint64_t)instance + 0x24);
+        void *characterBaseData = *(void**)((uint64_t)instance + 0x2C);
         bool ai = get_IsAI(instance);
         if(characterBaseData != NULL && !ai) {
             // Cek apakah nilai default sudah diambil
@@ -165,16 +158,13 @@ void *hack_thread(void *) {
 
 #else //To compile this code for armv7 lib only.
     //  Gameplay.Characters.PlayerController.FixedUpdate
-    HOOK_LIB("libil2cpp.so", "0x17607E8", get_Update, old_Update);
+    HOOK_LIB("libil2cpp.so", "0x17C6E58", get_Update, old_Update);
 
     // Gameplay.Characters.PlayerController.AddXp
-    HOOK_LIB("libil2cpp.so", "0x175D57C", get_addxp, old_addxp);
-
-    // Gameplay.Characters.CharacterEntity.get_IsMultiplayerPlayer
-    HOOK_LIB("libil2cpp.so", "0x1705B40", get_IsMultiplayerPlayer, old_IsMultiplayerPlayer);
+    HOOK_LIB("libil2cpp.so", "0x17C3BE0", get_addxp, old_addxp);
 
     // Gameplay.Characters.CharacterEntity.get_IsAI
-    get_IsAI = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x1705AD0);
+    get_IsAI = (bool (*)(void *)) getAbsoluteAddress(targetLibName, 0x176BAB0);
 
     /*
     // Hook example. Comment out if you don't use hook
